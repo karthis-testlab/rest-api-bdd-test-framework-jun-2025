@@ -5,16 +5,20 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import pojo.IncidentPayLoad;
 
 import static io.restassured.RestAssured.*;
 
 import java.util.List;
+import java.util.Map;
 
 import org.hamcrest.Matchers;
 
 public class IncidentSteps {
 	
+	IncidentPayLoad requestPayload = new IncidentPayLoad();
 	RequestSpecBuilder builder = new RequestSpecBuilder();
 	Response response;
 
@@ -45,6 +49,11 @@ public class IncidentSteps {
 			builder.addPathParam(asLists.get(i).get(0), asLists.get(i).get(1));
 		}
 	}
+	
+	@Given("user set the {string} as a key and {string} as value in the header")
+	public void user_set_the_as_a_key_and_as_value_in_the_header(String key, String value) {
+	    builder.addHeader(key, value);
+	}
 
 	@When("user hit the get http method")
 	public void user_hit_the_get_http_method() {
@@ -53,6 +62,27 @@ public class IncidentSteps {
 				    .log().all()
 				   .when()
 				    .get();
+	}
+	
+	@When("user set the description {string} in the request body")
+	public void user_set_the_description_in_the_request_body(String description) {
+		requestPayload.setDescription(description);
+	}
+	
+	@When("user set the short description {string} in the request body")
+	public void user_set_the_short_description_in_the_request_body(String shortDescription) {
+	    requestPayload.setShort_description(shortDescription);
+	}
+	
+	@When("user hit the post http method")
+	public void user_hit_the_post_http_method() {
+	   response = given()
+			       .spec(builder.build())
+			       .log().all()
+			       .when()
+			       .body(requestPayload)
+			       .post();
+			   
 	}
 
 	@Then("user recived the succesfully response")
@@ -67,16 +97,34 @@ public class IncidentSteps {
 	
 	@Then("user recived the success response with following detail")
 	public void user_recived_the_success_response_with_following_detail(DataTable dataTable) {
-	    List<List<String>> asLists = dataTable.asLists();
-	    for (int i = 0; i < asLists.size(); i++) {
-	    	response.then()
-	    	        .log().all()
-	    	        .assertThat()
-	    	        .statusCode(Integer.parseInt(asLists.get(i).get(0)))
-	    	        .statusLine(Matchers.containsString(asLists.get(i).get(1)))
-	    	        .contentType(asLists.get(i).get(2))
-	    	        .body("result.sys_id", Matchers.equalTo(asLists.get(i).get(3)));
-		}
+		Map<String, String> map = dataTable.asMap();
+		response.then()
+        .log().all()
+        .assertThat()
+        .statusCode(Integer.parseInt(map.get("statusCode")))
+        .statusLine(Matchers.containsString(map.get("statusLine")))
+        .contentType(map.get("contentType"))
+        .body("result.sys_id", Matchers.equalTo(map.get("sysId")));		
+	}
+	
+	@Then("user finds in a single record in the incident table")
+	public void user_finds_in_a_single_record_in_the_incident_table() {
+	    response.then()
+	            .log().all()
+	            .assertThat()
+	            .statusCode(201)
+	            .statusLine(Matchers.containsString("Created"))
+	            .contentType(ContentType.JSON);
+	}
+	
+	@Then("user able to create the mulitple records successfully")
+	public void user_able_to_create_the_mulitple_records_successfully() {
+		response.then()
+        .log().all()
+        .assertThat()
+        .statusCode(201)
+        .statusLine(Matchers.containsString("Created"))
+        .contentType(ContentType.JSON);
 	}
 
 }
