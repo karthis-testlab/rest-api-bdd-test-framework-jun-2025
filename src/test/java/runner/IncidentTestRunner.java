@@ -5,9 +5,9 @@ import io.cucumber.testng.CucumberOptions;
 
 @CucumberOptions(
 		          features = {"src/test/java/features/incident.feature"},
-		          glue = {"step.defitions"},
+		          glue = {"step.defintions.som"},
 		          dryRun = false,
-		          tags = "not @e2e",
+		          tags = "@smoke or @e2e",
 		          plugin = {
 		        		  "html:cucumber-reports/result.html" 
 		          },	
